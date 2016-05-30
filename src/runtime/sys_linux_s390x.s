@@ -108,22 +108,21 @@ TEXT runtime·getrlimit(SB),NOSPLIT|NOFRAME,$0-20
 	MOVW	R2, ret+16(FP)
 	RET
 
+// func usleep(usec uint32)
 TEXT runtime·usleep(SB),NOSPLIT,$16-4
-	MOVW	usec+0(FP), R2
-	MOVD	R2, R4
-	MOVW	$1000000, R3
-	DIVD	R3, R2
-	MOVD	R2, 8(R15)
-	MULLD	R2, R3
-	SUB	R3, R4
-	MOVD	R4, 16(R15)
+	MOVD	$0, R2
+	MOVWZ	usec+0(FP), R3
+	MOVD	$1000000, R4
+	WORD	$0xB9870024 // DLGR R3=(R2:R3)/R4 R2=(R2:R3)%R4
+	MOVD	R2, tv_usec-8(SP)
+	MOVD	R3, tv_sec-16(SP)
 
 	// select(0, 0, 0, 0, &tv)
 	MOVW	$0, R2
 	MOVW	$0, R3
 	MOVW	$0, R4
 	MOVW	$0, R5
-	ADD	$8, R15, R6
+	MOVD	$tv-16(SP), R6
 	MOVW	$SYS_select, R1
 	SYSCALL
 	RET
