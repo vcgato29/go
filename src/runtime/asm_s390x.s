@@ -386,53 +386,56 @@ TEXT ·reflectcall(SB), NOSPLIT, $-8-32
 TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 	NO_LOCAL_POINTERS;			\
 	/* copy arguments to stack */		\
-	MOVD	arg+16(FP), R3;			\
-	MOVWZ	argsize+24(FP), R4;			\
-	MOVD	R15, R5;				\
-	ADD	$(8-1), R5;			\
-	SUB	$1, R3;				\
-	ADD	R5, R4;				\
-	CMP	R5, R4;				\
-	BEQ	6(PC);				\
-	ADD	$1, R3;				\
-	ADD	$1, R5;				\
-	MOVBZ	0(R3), R6;			\
-	MOVBZ	R6, 0(R5);			\
-	BR	-6(PC);				\
+	MOVD	arg+16(FP), R4;			\
+	MOVWZ	argsize+24(FP), R5;		\
+	MOVD	$stack-MAXSIZE(SP), R6;		\
+l1:						\
+	CMP	R5, $256;			\
+	BLT	l2;				\
+	SUB	$256, R5;			\
+	MVC	$256, 0(R4), 0(R6);		\
+	MOVD	$256(R4), R4;			\
+	MOVD	$256(R6), R6;			\
+	BR	l1;				\
+l2:						\
+	CMP	R5, $0;				\
+	BEQ	l3;				\
+	SUB	$1, R5;				\
+	EXRL	$callfn_mvc<>(SB), R5;		\
+l3:						\
 	/* call function */			\
 	MOVD	f+8(FP), R12;			\
 	MOVD	(R12), R8;			\
 	PCDATA  $PCDATA_StackMapIndex, $0;	\
 	BL	(R8);				\
 	/* copy return values back */		\
-	MOVD	arg+16(FP), R3;			\
-	MOVWZ	n+24(FP), R4;			\
-	MOVWZ	retoffset+28(FP), R6;		\
-	MOVD	R15, R5;				\
-	ADD	R6, R5; 			\
-	ADD	R6, R3;				\
-	SUB	R6, R4;				\
-	ADD	$(8-1), R5;			\
-	SUB	$1, R3;				\
-	ADD	R5, R4;				\
-loop:						\
-	CMP	R5, R4;				\
-	BEQ	end;				\
-	ADD	$1, R5;				\
-	ADD	$1, R3;				\
-	MOVBZ	0(R5), R6;			\
-	MOVBZ	R6, 0(R3);			\
-	BR	loop;				\
-end:						\
+	MOVD	arg+16(FP), R6;			\
+	MOVWZ	n+24(FP), R5;			\
+	MOVD	$stack-MAXSIZE(SP), R4;		\
+	MOVWZ	retoffset+28(FP), R1;		\
+	ADD	R1, R4;				\
+	ADD	R1, R6;				\
+	SUB	R1, R5;				\
+l4:						\
+	CMP	R5, $256;			\
+	BLT	l5;				\
+	SUB	$256, R5;			\
+	MVC	$256, 0(R4), 0(R6);		\
+	MOVD	$256(R4), R4;			\
+	MOVD	$256(R6), R6;			\
+	BR	l4;				\
+l5:						\
+	CMP	R5, $0;				\
+	BEQ	l6;				\
+	SUB	$1, R5;				\
+	EXRL	$callfn_mvc<>(SB), R5;		\
+l6:						\
 	/* execute write barrier updates */	\
-	MOVD	argtype+0(FP), R7;		\
-	MOVD	arg+16(FP), R3;			\
-	MOVWZ	n+24(FP), R4;			\
-	MOVWZ	retoffset+28(FP), R6;		\
-	MOVD	R7, 8(R15);			\
-	MOVD	R3, 16(R15);			\
-	MOVD	R4, 24(R15);			\
-	MOVD	R6, 32(R15);			\
+	MOVD	argtype+0(FP), R1;		\
+	MOVD	arg+16(FP), R2;			\
+	MOVWZ	n+24(FP), R3;			\
+	MOVWZ	retoffset+28(FP), R4;		\
+	STMG	R1, R4, stack-MAXSIZE(SP);	\
 	BL	runtime·callwritebarrier(SB);	\
 	RET
 
@@ -462,6 +465,12 @@ CALLFN(·call134217728, 134217728)
 CALLFN(·call268435456, 268435456)
 CALLFN(·call536870912, 536870912)
 CALLFN(·call1073741824, 1073741824)
+
+// DO NOT CALL - target for exrl (execute relative long) instruction.
+TEXT callfn_mvc<>(SB),NOSPLIT|NOFRAME,$0-0
+	MVC	$1, 0(R4), 0(R6)
+	MOVD	R0, 0(R0)
+	RET
 
 TEXT runtime·procyield(SB),NOSPLIT,$0-0
 	RET
