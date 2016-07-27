@@ -72,12 +72,9 @@ TEXT ·AddInt32(SB),NOSPLIT,$0-20
 TEXT ·AddUint32(SB),NOSPLIT,$0-20
 	MOVD	addr+0(FP), R4
 	MOVWZ	delta+8(FP), R5
-	MOVWZ	(R4), R3
-repeat:
-	ADD	R3, R5, R6
-	CS	R3, R6, (R4) // if R3==(R4) then (R4)=R6 else R3=(R4)
-	BNE	repeat
-	MOVW	R6, new+16(FP)
+	LAA	R5, R6, (R4) // R6=(R4); (R4)+=R5
+	ADD	R6, R5
+	MOVW	R5, new+16(FP)
 	RET
 
 TEXT ·AddUintptr(SB),NOSPLIT,$0-24
@@ -89,12 +86,9 @@ TEXT ·AddInt64(SB),NOSPLIT,$0-24
 TEXT ·AddUint64(SB),NOSPLIT,$0-24
 	MOVD	addr+0(FP), R4
 	MOVD	delta+8(FP), R5
-	MOVD	(R4), R3
-repeat:
-	ADD	R3, R5, R6
-	CSG	R3, R6, (R4) // if R3==(R4) then (R4)=R6 else R3=(R4)
-	BNE	repeat
-	MOVD	R6, new+16(FP)
+	LAAG	R5, R6, (R4) // R6=(R4); (R4)+=R5
+	ADD	R6, R5
+	MOVD	R5, new+16(FP)
 	RET
 
 TEXT ·LoadInt32(SB),NOSPLIT,$0-12

@@ -90,24 +90,18 @@ TEXT ·Casp1(SB), NOSPLIT, $0-25
 TEXT ·Xadd(SB), NOSPLIT, $0-20
 	MOVD	ptr+0(FP), R4
 	MOVW	delta+8(FP), R5
-	MOVW	(R4), R3
-repeat:
-	ADD	R5, R3, R6
-	CS	R3, R6, (R4) // if R3==(R4) then (R4)=R6 else R3=(R4)
-	BNE	repeat
-	MOVW	R6, ret+16(FP)
+	LAA	R5, R6, (R4) // R6=(R4); (R4)+=R5
+	ADD	R6, R5
+	MOVW	R5, ret+16(FP)
 	RET
 
 // func Xadd64(ptr *uint64, delta int64) uint64
 TEXT ·Xadd64(SB), NOSPLIT, $0-24
 	MOVD	ptr+0(FP), R4
 	MOVD	delta+8(FP), R5
-	MOVD	(R4), R3
-repeat:
-	ADD	R5, R3, R6
-	CSG	R3, R6, (R4) // if R3==(R4) then (R4)=R6 else R3=(R4)
-	BNE	repeat
-	MOVD	R6, ret+16(FP)
+	LAAG	R5, R6, (R4) // R6=(R4); (R4)+=R5
+	ADD	R6, R5
+	MOVD	R5, ret+16(FP)
 	RET
 
 // func Xchg(ptr *uint32, new uint32) uint32
@@ -146,13 +140,9 @@ TEXT ·Or8(SB), NOSPLIT, $0-9
 	XOR	$3, R5 // big endian - flip direction
 	SLD	$3, R5 // MUL $8, R5
 	SLD	R5, R4
-	// Align ptr down to 4 bytes so we can use 32-bit load/store.
+	// Align ptr down to 4 bytes so we can use 32-bit load-and-or.
 	AND	$-4, R3
-	MOVWZ	0(R3), R6
-again:
-	OR	R4, R6, R7
-	CS	R6, R7, 0(R3) // if R6==(R3) then (R3)=R7 else R6=(R3)
-	BNE	again
+	LAO	R4, R6, 0(R3) // R6=0(R3); 0(R3)|=R4
 	RET
 
 // func And8(addr *uint8, v uint8)
@@ -166,11 +156,7 @@ TEXT ·And8(SB), NOSPLIT, $0-9
 	SLD	$3, R5 // MUL $8, R5
 	OR	$-256, R4 // create 0xffffffffffffffxx
 	RLLG	R5, R4
-	// Align ptr down to 4 bytes so we can use 32-bit load/store.
+	// Align ptr down to 4 bytes so we can use 32-bit load-and-and.
 	AND	$-4, R3
-	MOVWZ	0(R3), R6
-again:
-	AND	R4, R6, R7
-	CS	R6, R7, 0(R3) // if R6==(R3) then (R3)=R7 else R6=(R3)
-	BNE	again
+	LAN	R4, R6, 0(R3) // R6=0(R3); 0(R3)&=R4
 	RET
