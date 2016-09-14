@@ -1254,14 +1254,20 @@ const (
 	OpS390XADDW
 	OpS390XADDconst
 	OpS390XADDWconst
+	OpS390XADDload
+	OpS390XADDWload
 	OpS390XSUB
 	OpS390XSUBW
 	OpS390XSUBconst
 	OpS390XSUBWconst
+	OpS390XSUBload
+	OpS390XSUBWload
 	OpS390XMULLD
 	OpS390XMULLW
 	OpS390XMULLDconst
 	OpS390XMULLWconst
+	OpS390XMULLDload
+	OpS390XMULLWload
 	OpS390XMULHD
 	OpS390XMULHDU
 	OpS390XDIVD
@@ -15694,6 +15700,40 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:         "ADDload",
+		auxType:      auxSymOff,
+		argLen:       3,
+		resultInArg0: true,
+		clobberFlags: true,
+		asm:          s390x.AADD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 5119},  // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+				{1, 37886}, // R1 R2 R3 R4 R5 R6 R7 R8 R9 R12 SP
+			},
+			outputs: []outputInfo{
+				{0, 5119}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+			},
+		},
+	},
+	{
+		name:         "ADDWload",
+		auxType:      auxSymOff,
+		argLen:       3,
+		resultInArg0: true,
+		clobberFlags: true,
+		asm:          s390x.AADDW,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 5119},  // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+				{1, 37886}, // R1 R2 R3 R4 R5 R6 R7 R8 R9 R12 SP
+			},
+			outputs: []outputInfo{
+				{0, 5119}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+			},
+		},
+	},
+	{
 		name:         "SUB",
 		argLen:       2,
 		clobberFlags: true,
@@ -15749,6 +15789,40 @@ var opcodeTable = [...]opInfo{
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 5119}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+			},
+			outputs: []outputInfo{
+				{0, 5119}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+			},
+		},
+	},
+	{
+		name:         "SUBload",
+		auxType:      auxSymOff,
+		argLen:       3,
+		resultInArg0: true,
+		clobberFlags: true,
+		asm:          s390x.ASUB,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 5119},  // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+				{1, 37886}, // R1 R2 R3 R4 R5 R6 R7 R8 R9 R12 SP
+			},
+			outputs: []outputInfo{
+				{0, 5119}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+			},
+		},
+	},
+	{
+		name:         "SUBWload",
+		auxType:      auxSymOff,
+		argLen:       3,
+		resultInArg0: true,
+		clobberFlags: true,
+		asm:          s390x.ASUBW,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 5119},  // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+				{1, 37886}, // R1 R2 R3 R4 R5 R6 R7 R8 R9 R12 SP
 			},
 			outputs: []outputInfo{
 				{0, 5119}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
@@ -15815,6 +15889,40 @@ var opcodeTable = [...]opInfo{
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 5119}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+			},
+			outputs: []outputInfo{
+				{0, 5119}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+			},
+		},
+	},
+	{
+		name:         "MULLDload",
+		auxType:      auxSymOff,
+		argLen:       3,
+		resultInArg0: true,
+		clobberFlags: true,
+		asm:          s390x.AMULLD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 5119},  // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+				{1, 37886}, // R1 R2 R3 R4 R5 R6 R7 R8 R9 R12 SP
+			},
+			outputs: []outputInfo{
+				{0, 5119}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+			},
+		},
+	},
+	{
+		name:         "MULLWload",
+		auxType:      auxSymOff,
+		argLen:       3,
+		resultInArg0: true,
+		clobberFlags: true,
+		asm:          s390x.AMULLW,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 5119},  // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12
+				{1, 37886}, // R1 R2 R3 R4 R5 R6 R7 R8 R9 R12 SP
 			},
 			outputs: []outputInfo{
 				{0, 5119}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R12

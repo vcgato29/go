@@ -149,6 +149,59 @@ func canMergeSym(x, y interface{}) bool {
 	return x == nil || y == nil
 }
 
+// canMergeLoad reports whether the load with the input mem can be merged into
+// target without invalidating the schedule. All inputs to target except for
+// load should be passed as args.
+func canMergeLoad(target, load *Value, args ...*Value) bool {
+	if target.Block.ID != load.Block.ID {
+		// If the load is in a different block do not merge it.
+		return false
+	}
+	mem := load.Args[len(load.Args)-1]
+
+	// Go backwards from target, check to see if mem is invalidated on any
+	// path to the target.
+	iter := 0
+search:
+	for len(args) > 0 {
+		iter++
+		if iter >= 100 {
+			// Give up.
+			// TODO(mundaym): this might be a loop, error instead?
+			return false
+		}
+		v := args[len(args)-1]
+		args = args[:len(args)-1]
+		if target.Block.ID != v.Block.ID {
+			// Since target and load are in the same block
+			// we can stop searching when we leave the block.
+			continue search
+		}
+		if v.Op == OpPhi {
+			// A Phi might imply a loop in the graph.
+			// TODO(mundaym): handle loops?
+			return false
+		}
+		if v.Type.IsMemory() {
+			// mem has been invalidated.
+			return false
+		}
+		for _, a := range v.Args {
+			// If one of the inputs is mem then we know mem
+			// is valid at this point.
+			if a == mem {
+				continue search
+			}
+		}
+		for _, a := range v.Args {
+			if target.Block.ID == a.Block.ID {
+				args = append(args, a)
+			}
+		}
+	}
+	return true
+}
+
 // isArg returns whether s is an arg symbol
 func isArg(s interface{}) bool {
 	_, ok := s.(*ArgSymbol)

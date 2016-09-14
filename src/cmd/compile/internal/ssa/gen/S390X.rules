@@ -928,6 +928,108 @@
 (XOR x x) -> (MOVDconst [0])
 (XORW x x) -> (MOVDconst [0])
 
+// Fold memory operations into operations.
+// Exclude SB because these operations cannot handle use relative addresses.
+// TODO(mundaym): use LARL in the assembler to handle SB?
+(ADD <t> x g:(MOVDload [off] {sym} ptr mem))
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (ADDload <t> [off] {sym} x ptr mem)
+(ADD <t> g:(MOVDload [off] {sym} ptr mem) x)
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (ADDload <t> [off] {sym} x ptr mem)
+(ADDW <t> x g:(MOVWload [off] {sym} ptr mem))
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (ADDWload <t> [off] {sym} x ptr mem)
+(ADDW <t> g:(MOVWload [off] {sym} ptr mem) x)
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (ADDWload <t> [off] {sym} x ptr mem)
+(ADDW <t> x g:(MOVWZload [off] {sym} ptr mem))
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (ADDWload <t> [off] {sym} x ptr mem)
+(ADDW <t> g:(MOVWZload [off] {sym} ptr mem) x)
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (ADDWload <t> [off] {sym} x ptr mem)
+(MULLD <t> x g:(MOVDload [off] {sym} ptr mem))
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (MULLDload <t> [off] {sym} x ptr mem)
+(MULLD <t> g:(MOVDload [off] {sym} ptr mem) x)
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (MULLDload <t> [off] {sym} x ptr mem)
+(MULLW <t> x g:(MOVWload [off] {sym} ptr mem))
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (MULLWload <t> [off] {sym} x ptr mem)
+(MULLW <t> g:(MOVWload [off] {sym} ptr mem) x)
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (MULLWload <t> [off] {sym} x ptr mem)
+(MULLW <t> x g:(MOVWZload [off] {sym} ptr mem))
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (MULLWload <t> [off] {sym} x ptr mem)
+(MULLW <t> g:(MOVWZload [off] {sym} ptr mem) x)
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (MULLWload <t> [off] {sym} x ptr mem)
+(SUB <t> x g:(MOVDload [off] {sym} ptr mem))
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (SUBload <t> [off] {sym} x ptr mem)
+(SUBW <t> x g:(MOVWload [off] {sym} ptr mem))
+	&& g.Uses == 1
+	&& ptr.Op != OpSB
+	&& is32Bit(off)
+	&& canMergeLoad(v, g, x)
+	&& clobber(g)
+	-> (SUBWload <t> [off] {sym} x ptr mem)
+
 // Combine constant stores into larger (unaligned) stores.
 // It doesn't work to global data (based on SB),
 // because STGRL doesn't support unaligned address
