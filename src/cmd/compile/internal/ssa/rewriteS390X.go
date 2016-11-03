@@ -620,6 +620,8 @@ func rewriteValueS390X(v *Value) bool {
 		return rewriteValueS390X_OpS390XSRW(v)
 	case OpS390XSTM2:
 		return rewriteValueS390X_OpS390XSTM2(v)
+	case OpS390XSTM4:
+		return rewriteValueS390X_OpS390XSTM4(v)
 	case OpS390XSTMG2:
 		return rewriteValueS390X_OpS390XSTMG2(v)
 	case OpS390XSUB:
@@ -17006,6 +17008,48 @@ func rewriteValueS390X_OpS390XSTM2(v *Value) bool {
 		v.Aux = s
 		v.AddArg(p)
 		v.AddArg(x)
+		v.AddArg(mem)
+		return true
+	}
+	return false
+}
+func rewriteValueS390X_OpS390XSTM4(v *Value) bool {
+	// match: (STM4 [i] {s} p (SRDconst [32] x) x (SRDconst [32] y) y mem)
+	// cond:
+	// result: (STMG2 [i] {s} p x y mem)
+	for {
+		i := v.AuxInt
+		s := v.Aux
+		p := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpS390XSRDconst {
+			break
+		}
+		if v_1.AuxInt != 32 {
+			break
+		}
+		x := v_1.Args[0]
+		if x != v.Args[2] {
+			break
+		}
+		v_3 := v.Args[3]
+		if v_3.Op != OpS390XSRDconst {
+			break
+		}
+		if v_3.AuxInt != 32 {
+			break
+		}
+		y := v_3.Args[0]
+		if y != v.Args[4] {
+			break
+		}
+		mem := v.Args[5]
+		v.reset(OpS390XSTMG2)
+		v.AuxInt = i
+		v.Aux = s
+		v.AddArg(p)
+		v.AddArg(x)
+		v.AddArg(y)
 		v.AddArg(mem)
 		return true
 	}

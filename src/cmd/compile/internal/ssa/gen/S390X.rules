@@ -1723,3 +1723,4 @@
 
 // Convert 32-bit store multiples into 64-bit stores.
 (STM2 [i] {s} p (SRDconst [32] x) x mem) -> (MOVDstore [i] {s} p x mem)
+(STM4 [i] {s} p (SRDconst [32] x) x (SRDconst [32] y) y mem) -> (STMG2 [i] {s} p x y mem)
