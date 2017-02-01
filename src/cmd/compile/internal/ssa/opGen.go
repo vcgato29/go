@@ -1463,6 +1463,10 @@ const (
 	OpS390XCMPWconst
 	OpS390XCMPUconst
 	OpS390XCMPWUconst
+	OpS390XTMHH
+	OpS390XTMHL
+	OpS390XTMLH
+	OpS390XTMLL
 	OpS390XFCMPS
 	OpS390XFCMP
 	OpS390XSLD
@@ -18865,6 +18869,50 @@ var opcodeTable = [...]opInfo{
 		auxType: auxInt32,
 		argLen:  1,
 		asm:     s390x.ACMPWU,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 56319}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R11 R12 R14 SP
+			},
+		},
+	},
+	{
+		name:    "TMHH",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     s390x.ATMHH,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 56319}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R11 R12 R14 SP
+			},
+		},
+	},
+	{
+		name:    "TMHL",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     s390x.ATMHL,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 56319}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R11 R12 R14 SP
+			},
+		},
+	},
+	{
+		name:    "TMLH",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     s390x.ATMLH,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 56319}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R11 R12 R14 SP
+			},
+		},
+	},
+	{
+		name:    "TMLL",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     s390x.ATMLL,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 56319}, // R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R11 R12 R14 SP

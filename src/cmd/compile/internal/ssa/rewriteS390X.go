@@ -636,6 +636,14 @@ func rewriteValueS390X(v *Value) bool {
 		return rewriteValueS390X_OpS390XSUBWconst(v)
 	case OpS390XSUBconst:
 		return rewriteValueS390X_OpS390XSUBconst(v)
+	case OpS390XTMHH:
+		return rewriteValueS390X_OpS390XTMHH(v)
+	case OpS390XTMHL:
+		return rewriteValueS390X_OpS390XTMHL(v)
+	case OpS390XTMLH:
+		return rewriteValueS390X_OpS390XTMLH(v)
+	case OpS390XTMLL:
+		return rewriteValueS390X_OpS390XTMLL(v)
 	case OpS390XXOR:
 		return rewriteValueS390X_OpS390XXOR(v)
 	case OpS390XXORW:
@@ -17447,6 +17455,82 @@ func rewriteValueS390X_OpS390XSUBconst(v *Value) bool {
 	}
 	return false
 }
+func rewriteValueS390X_OpS390XTMHH(v *Value) bool {
+	// match: (TMHH (MOVDconst [c]) [d])
+	// cond: c&(d<<48) == 0
+	// result: (FlagEQ)
+	for {
+		d := v.AuxInt
+		v_0 := v.Args[0]
+		if v_0.Op != OpS390XMOVDconst {
+			break
+		}
+		c := v_0.AuxInt
+		if !(c&(d<<48) == 0) {
+			break
+		}
+		v.reset(OpS390XFlagEQ)
+		return true
+	}
+	return false
+}
+func rewriteValueS390X_OpS390XTMHL(v *Value) bool {
+	// match: (TMHL (MOVDconst [c]) [d])
+	// cond: c&(d<<32) == 0
+	// result: (FlagEQ)
+	for {
+		d := v.AuxInt
+		v_0 := v.Args[0]
+		if v_0.Op != OpS390XMOVDconst {
+			break
+		}
+		c := v_0.AuxInt
+		if !(c&(d<<32) == 0) {
+			break
+		}
+		v.reset(OpS390XFlagEQ)
+		return true
+	}
+	return false
+}
+func rewriteValueS390X_OpS390XTMLH(v *Value) bool {
+	// match: (TMLH (MOVDconst [c]) [d])
+	// cond: c&(d<<16) == 0
+	// result: (FlagEQ)
+	for {
+		d := v.AuxInt
+		v_0 := v.Args[0]
+		if v_0.Op != OpS390XMOVDconst {
+			break
+		}
+		c := v_0.AuxInt
+		if !(c&(d<<16) == 0) {
+			break
+		}
+		v.reset(OpS390XFlagEQ)
+		return true
+	}
+	return false
+}
+func rewriteValueS390X_OpS390XTMLL(v *Value) bool {
+	// match: (TMLL (MOVDconst [c]) [d])
+	// cond: c&d == 0
+	// result: (FlagEQ)
+	for {
+		d := v.AuxInt
+		v_0 := v.Args[0]
+		if v_0.Op != OpS390XMOVDconst {
+			break
+		}
+		c := v_0.AuxInt
+		if !(c&d == 0) {
+			break
+		}
+		v.reset(OpS390XFlagEQ)
+		return true
+	}
+	return false
+}
 func rewriteValueS390X_OpS390XXOR(v *Value) bool {
 	// match: (XOR x (MOVDconst [c]))
 	// cond: isU32Bit(c)
@@ -18659,6 +18743,690 @@ func rewriteBlockS390X(b *Block) bool {
 			_ = no
 			return true
 		}
+		// match: (EQ (CMPconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x000000000000ffff == c
+		// result: (EQ (TMLL x [c]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x000000000000ffff == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x000000000000ffff == c
+		// result: (EQ (TMLL x [c]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x000000000000ffff == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x00000000ffff0000 == c
+		// result: (EQ (TMLH x [c>>16]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x00000000ffff0000 == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = c >> 16
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x00000000ffff0000 == c
+		// result: (EQ (TMLH x [c>>16]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x00000000ffff0000 == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = c >> 16
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x0000ffff00000000 == c
+		// result: (EQ (TMHL x [c>>32]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff00000000 == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMHL, TypeFlags)
+			v0.AuxInt = c >> 32
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x0000ffff00000000 == c
+		// result: (EQ (TMHL x [c>>32]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff00000000 == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMHL, TypeFlags)
+			v0.AuxInt = c >> 32
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: uint64(c)&0xffff000000000000 == uint64(c)
+		// result: (EQ (TMHH x [int64(uint64(c)>>48)]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(uint64(c)&0xffff000000000000 == uint64(c)) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMHH, TypeFlags)
+			v0.AuxInt = int64(uint64(c) >> 48)
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: uint64(c)&0xffff000000000000 == uint64(c)
+		// result: (EQ (TMHH x [int64(uint64(c)>>48)]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(uint64(c)&0xffff000000000000 == uint64(c)) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMHH, TypeFlags)
+			v0.AuxInt = int64(uint64(c) >> 48)
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPUconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x000000000000ffff == c
+		// result: (EQ (TMLL x [c]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x000000000000ffff == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x000000000000ffff == c
+		// result: (EQ (TMLL x [c]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x000000000000ffff == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPUconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x00000000ffff0000 == c
+		// result: (EQ (TMLH x [c>>16]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x00000000ffff0000 == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = c >> 16
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x00000000ffff0000 == c
+		// result: (EQ (TMLH x [c>>16]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x00000000ffff0000 == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = c >> 16
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPUconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x0000ffff00000000 == c
+		// result: (EQ (TMHL x [c>>32]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff00000000 == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMHL, TypeFlags)
+			v0.AuxInt = c >> 32
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x0000ffff00000000 == c
+		// result: (EQ (TMHL x [c>>32]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff00000000 == c) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMHL, TypeFlags)
+			v0.AuxInt = c >> 32
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPUconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: uint64(c)&0xffff000000000000 == uint64(c)
+		// result: (EQ (TMHH x [int64(uint64(c)>>48)]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(uint64(c)&0xffff000000000000 == uint64(c)) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMHH, TypeFlags)
+			v0.AuxInt = int64(uint64(c) >> 48)
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: uint64(c)&0xffff000000000000 == uint64(c)
+		// result: (EQ (TMHH x [int64(uint64(c)>>48)]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(uint64(c)&0xffff000000000000 == uint64(c)) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMHH, TypeFlags)
+			v0.AuxInt = int64(uint64(c) >> 48)
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPWconst  (ANDWconst x [c]) [0]) yes no)
+		// cond: c&0xffff0000 == 0
+		// result: (EQ (TMLL x [c&0xffff]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPWconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XANDWconst {
+				break
+			}
+			c := v_0.AuxInt
+			x := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0xffff0000 == 0) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c & 0xffff
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPWconst  (ANDWconst x [c]) [0]) yes no)
+		// cond: c&0x0000ffff == 0
+		// result: (EQ (TMLH x [(c>>16)&0xffff]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPWconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XANDWconst {
+				break
+			}
+			c := v_0.AuxInt
+			x := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff == 0) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = (c >> 16) & 0xffff
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPWUconst (ANDWconst x [c]) [0]) yes no)
+		// cond: c&0xffff0000 == 0
+		// result: (EQ (TMLL x [c&0xffff]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPWUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XANDWconst {
+				break
+			}
+			c := v_0.AuxInt
+			x := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0xffff0000 == 0) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c & 0xffff
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (EQ (CMPWUconst (ANDWconst x [c]) [0]) yes no)
+		// cond: c&0x0000ffff == 0
+		// result: (EQ (TMLH x [(c>>16)&0xffff]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPWUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XANDWconst {
+				break
+			}
+			c := v_0.AuxInt
+			x := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff == 0) {
+				break
+			}
+			b.Kind = BlockS390XEQ
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = (c >> 16) & 0xffff
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
 		// match: (EQ (FlagEQ) yes no)
 		// cond:
 		// result: (First nil yes no)
@@ -19566,6 +20334,690 @@ func rewriteBlockS390X(b *Block) bool {
 			no := b.Succs[1]
 			b.Kind = BlockS390XNE
 			b.SetControl(cmp)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x000000000000ffff == c
+		// result: (NE (TMLL x [c]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x000000000000ffff == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x000000000000ffff == c
+		// result: (NE (TMLL x [c]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x000000000000ffff == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x00000000ffff0000 == c
+		// result: (NE (TMLH x [c>>16]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x00000000ffff0000 == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = c >> 16
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x00000000ffff0000 == c
+		// result: (NE (TMLH x [c>>16]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x00000000ffff0000 == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = c >> 16
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x0000ffff00000000 == c
+		// result: (NE (TMHL x [c>>32]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff00000000 == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMHL, TypeFlags)
+			v0.AuxInt = c >> 32
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x0000ffff00000000 == c
+		// result: (NE (TMHL x [c>>32]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff00000000 == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMHL, TypeFlags)
+			v0.AuxInt = c >> 32
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: uint64(c)&0xffff000000000000 == uint64(c)
+		// result: (NE (TMHH x [int64(uint64(c)>>48)]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(uint64(c)&0xffff000000000000 == uint64(c)) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMHH, TypeFlags)
+			v0.AuxInt = int64(uint64(c) >> 48)
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: uint64(c)&0xffff000000000000 == uint64(c)
+		// result: (NE (TMHH x [int64(uint64(c)>>48)]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(uint64(c)&0xffff000000000000 == uint64(c)) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMHH, TypeFlags)
+			v0.AuxInt = int64(uint64(c) >> 48)
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPUconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x000000000000ffff == c
+		// result: (NE (TMLL x [c]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x000000000000ffff == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x000000000000ffff == c
+		// result: (NE (TMLL x [c]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x000000000000ffff == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPUconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x00000000ffff0000 == c
+		// result: (NE (TMLH x [c>>16]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x00000000ffff0000 == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = c >> 16
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x00000000ffff0000 == c
+		// result: (NE (TMLH x [c>>16]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x00000000ffff0000 == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = c >> 16
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPUconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: c&0x0000ffff00000000 == c
+		// result: (NE (TMHL x [c>>32]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff00000000 == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMHL, TypeFlags)
+			v0.AuxInt = c >> 32
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: c&0x0000ffff00000000 == c
+		// result: (NE (TMHL x [c>>32]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff00000000 == c) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMHL, TypeFlags)
+			v0.AuxInt = c >> 32
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPUconst (AND x (MOVDconst [c])) [0]) yes no)
+		// cond: uint64(c)&0xffff000000000000 == uint64(c)
+		// result: (NE (TMHH x [int64(uint64(c)>>48)]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			x := v_0.Args[0]
+			v_0_1 := v_0.Args[1]
+			if v_0_1.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_1.AuxInt
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(uint64(c)&0xffff000000000000 == uint64(c)) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMHH, TypeFlags)
+			v0.AuxInt = int64(uint64(c) >> 48)
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no)
+		// cond: uint64(c)&0xffff000000000000 == uint64(c)
+		// result: (NE (TMHH x [int64(uint64(c)>>48)]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XAND {
+				break
+			}
+			v_0_0 := v_0.Args[0]
+			if v_0_0.Op != OpS390XMOVDconst {
+				break
+			}
+			c := v_0_0.AuxInt
+			x := v_0.Args[1]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(uint64(c)&0xffff000000000000 == uint64(c)) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMHH, TypeFlags)
+			v0.AuxInt = int64(uint64(c) >> 48)
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPWconst  (ANDWconst x [c]) [0]) yes no)
+		// cond: c&0xffff0000 == 0
+		// result: (NE (TMLL x [c&0xffff]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPWconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XANDWconst {
+				break
+			}
+			c := v_0.AuxInt
+			x := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0xffff0000 == 0) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c & 0xffff
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPWconst  (ANDWconst x [c]) [0]) yes no)
+		// cond: c&0x0000ffff == 0
+		// result: (NE (TMLH x [(c>>16)&0xffff]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPWconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XANDWconst {
+				break
+			}
+			c := v_0.AuxInt
+			x := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff == 0) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = (c >> 16) & 0xffff
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPWUconst (ANDWconst x [c]) [0]) yes no)
+		// cond: c&0xffff0000 == 0
+		// result: (NE (TMLL x [c&0xffff]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPWUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XANDWconst {
+				break
+			}
+			c := v_0.AuxInt
+			x := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0xffff0000 == 0) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLL, TypeFlags)
+			v0.AuxInt = c & 0xffff
+			v0.AddArg(x)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NE (CMPWUconst (ANDWconst x [c]) [0]) yes no)
+		// cond: c&0x0000ffff == 0
+		// result: (NE (TMLH x [(c>>16)&0xffff]) yes no)
+		for {
+			v := b.Control
+			if v.Op != OpS390XCMPWUconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpS390XANDWconst {
+				break
+			}
+			c := v_0.AuxInt
+			x := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			if !(c&0x0000ffff == 0) {
+				break
+			}
+			b.Kind = BlockS390XNE
+			v0 := b.NewValue0(v.Pos, OpS390XTMLH, TypeFlags)
+			v0.AuxInt = (c >> 16) & 0xffff
+			v0.AddArg(x)
+			b.SetControl(v0)
 			_ = yes
 			_ = no
 			return true

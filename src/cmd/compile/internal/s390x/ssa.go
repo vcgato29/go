@@ -326,7 +326,8 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		opregreg(s, v.Op.Asm(), v.Args[1].Reg(), v.Args[0].Reg())
 	case ssa.OpS390XFCMPS, ssa.OpS390XFCMP:
 		opregreg(s, v.Op.Asm(), v.Args[1].Reg(), v.Args[0].Reg())
-	case ssa.OpS390XCMPconst, ssa.OpS390XCMPWconst, ssa.OpS390XCMPUconst, ssa.OpS390XCMPWUconst:
+	case ssa.OpS390XCMPconst, ssa.OpS390XCMPWconst, ssa.OpS390XCMPUconst, ssa.OpS390XCMPWUconst,
+		ssa.OpS390XTMHH, ssa.OpS390XTMHL, ssa.OpS390XTMLH, ssa.OpS390XTMLL:
 		p := s.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = v.Args[0].Reg()

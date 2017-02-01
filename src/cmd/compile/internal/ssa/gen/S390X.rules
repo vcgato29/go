@@ -908,6 +908,59 @@
 (CMPconst (ANDconst _ [m]) [n]) && 0 <= m && m < n -> (FlagLT)
 (CMPWconst (ANDWconst _ [m]) [n]) && 0 <= int32(m) && int32(m) < int32(n) -> (FlagLT)
 
+// Test under mask.
+(EQ (CMPconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x000000000000ffff == c -> (EQ (TMLL x [c]) yes no)
+(EQ (CMPconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x000000000000ffff == c -> (EQ (TMLL x [c]) yes no)
+(EQ (CMPconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x00000000ffff0000 == c -> (EQ (TMLH x [c>>16]) yes no)
+(EQ (CMPconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x00000000ffff0000 == c -> (EQ (TMLH x [c>>16]) yes no)
+(EQ (CMPconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x0000ffff00000000 == c -> (EQ (TMHL x [c>>32]) yes no)
+(EQ (CMPconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x0000ffff00000000 == c -> (EQ (TMHL x [c>>32]) yes no)
+(EQ (CMPconst (AND x (MOVDconst [c])) [0]) yes no) && uint64(c)&0xffff000000000000 == uint64(c) -> (EQ (TMHH x [int64(uint64(c)>>48)]) yes no)
+(EQ (CMPconst (AND (MOVDconst [c]) x) [0]) yes no) && uint64(c)&0xffff000000000000 == uint64(c) -> (EQ (TMHH x [int64(uint64(c)>>48)]) yes no)
+
+(EQ (CMPUconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x000000000000ffff == c -> (EQ (TMLL x [c]) yes no)
+(EQ (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x000000000000ffff == c -> (EQ (TMLL x [c]) yes no)
+(EQ (CMPUconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x00000000ffff0000 == c -> (EQ (TMLH x [c>>16]) yes no)
+(EQ (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x00000000ffff0000 == c -> (EQ (TMLH x [c>>16]) yes no)
+(EQ (CMPUconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x0000ffff00000000 == c -> (EQ (TMHL x [c>>32]) yes no)
+(EQ (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x0000ffff00000000 == c -> (EQ (TMHL x [c>>32]) yes no)
+(EQ (CMPUconst (AND x (MOVDconst [c])) [0]) yes no) && uint64(c)&0xffff000000000000 == uint64(c) -> (EQ (TMHH x [int64(uint64(c)>>48)]) yes no)
+(EQ (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no) && uint64(c)&0xffff000000000000 == uint64(c) -> (EQ (TMHH x [int64(uint64(c)>>48)]) yes no)
+
+(EQ (CMPWconst  (ANDWconst x [c]) [0]) yes no) && c&0xffff0000 == 0 -> (EQ (TMLL x [c&0xffff]) yes no)
+(EQ (CMPWconst  (ANDWconst x [c]) [0]) yes no) && c&0x0000ffff == 0 -> (EQ (TMLH x [(c>>16)&0xffff]) yes no)
+(EQ (CMPWUconst (ANDWconst x [c]) [0]) yes no) && c&0xffff0000 == 0 -> (EQ (TMLL x [c&0xffff]) yes no)
+(EQ (CMPWUconst (ANDWconst x [c]) [0]) yes no) && c&0x0000ffff == 0 -> (EQ (TMLH x [(c>>16)&0xffff]) yes no)
+
+(NE (CMPconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x000000000000ffff == c -> (NE (TMLL x [c]) yes no)
+(NE (CMPconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x000000000000ffff == c -> (NE (TMLL x [c]) yes no)
+(NE (CMPconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x00000000ffff0000 == c -> (NE (TMLH x [c>>16]) yes no)
+(NE (CMPconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x00000000ffff0000 == c -> (NE (TMLH x [c>>16]) yes no)
+(NE (CMPconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x0000ffff00000000 == c -> (NE (TMHL x [c>>32]) yes no)
+(NE (CMPconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x0000ffff00000000 == c -> (NE (TMHL x [c>>32]) yes no)
+(NE (CMPconst (AND x (MOVDconst [c])) [0]) yes no) && uint64(c)&0xffff000000000000 == uint64(c) -> (NE (TMHH x [int64(uint64(c)>>48)]) yes no)
+(NE (CMPconst (AND (MOVDconst [c]) x) [0]) yes no) && uint64(c)&0xffff000000000000 == uint64(c) -> (NE (TMHH x [int64(uint64(c)>>48)]) yes no)
+
+(NE (CMPUconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x000000000000ffff == c -> (NE (TMLL x [c]) yes no)
+(NE (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x000000000000ffff == c -> (NE (TMLL x [c]) yes no)
+(NE (CMPUconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x00000000ffff0000 == c -> (NE (TMLH x [c>>16]) yes no)
+(NE (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x00000000ffff0000 == c -> (NE (TMLH x [c>>16]) yes no)
+(NE (CMPUconst (AND x (MOVDconst [c])) [0]) yes no) && c&0x0000ffff00000000 == c -> (NE (TMHL x [c>>32]) yes no)
+(NE (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no) && c&0x0000ffff00000000 == c -> (NE (TMHL x [c>>32]) yes no)
+(NE (CMPUconst (AND x (MOVDconst [c])) [0]) yes no) && uint64(c)&0xffff000000000000 == uint64(c) -> (NE (TMHH x [int64(uint64(c)>>48)]) yes no)
+(NE (CMPUconst (AND (MOVDconst [c]) x) [0]) yes no) && uint64(c)&0xffff000000000000 == uint64(c) -> (NE (TMHH x [int64(uint64(c)>>48)]) yes no)
+
+(NE (CMPWconst  (ANDWconst x [c]) [0]) yes no) && c&0xffff0000 == 0 -> (NE (TMLL x [c&0xffff]) yes no)
+(NE (CMPWconst  (ANDWconst x [c]) [0]) yes no) && c&0x0000ffff == 0 -> (NE (TMLH x [(c>>16)&0xffff]) yes no)
+(NE (CMPWUconst (ANDWconst x [c]) [0]) yes no) && c&0xffff0000 == 0 -> (NE (TMLL x [c&0xffff]) yes no)
+(NE (CMPWUconst (ANDWconst x [c]) [0]) yes no) && c&0x0000ffff == 0 -> (NE (TMLH x [(c>>16)&0xffff]) yes no)
+
+(TMLL (MOVDconst [c]) [d]) && c&d == 0 -> (FlagEQ)
+(TMLH (MOVDconst [c]) [d]) && c&(d<<16) == 0 -> (FlagEQ)
+(TMHL (MOVDconst [c]) [d]) && c&(d<<32) == 0 -> (FlagEQ)
+(TMHH (MOVDconst [c]) [d]) && c&(d<<48) == 0 -> (FlagEQ)
+// TODO(mundaym): propagate other constants through TM[LH][LH] instructions.
+
 // Absorb flag constants into SBB ops.
 (SUBEcarrymask (FlagEQ)) -> (MOVDconst [-1])
 (SUBEcarrymask (FlagLT)) -> (MOVDconst [-1])

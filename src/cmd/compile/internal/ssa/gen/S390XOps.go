@@ -287,6 +287,11 @@ func init() {
 		{name: "CMPUconst", argLength: 1, reg: gp1flags, asm: "CMPU", typ: "Flags", aux: "Int64"},   // arg0 compare to auxint
 		{name: "CMPWUconst", argLength: 1, reg: gp1flags, asm: "CMPWU", typ: "Flags", aux: "Int32"}, // arg0 compare to auxint
 
+		{name: "TMHH", argLength: 1, reg: gp1flags, asm: "TMHH", typ:"Flags", aux: "Int64"}, // arg0 test under auxint mask
+		{name: "TMHL", argLength: 1, reg: gp1flags, asm: "TMHL", typ:"Flags", aux: "Int64"}, // arg0 test under auxint mask
+		{name: "TMLH", argLength: 1, reg: gp1flags, asm: "TMLH", typ:"Flags", aux: "Int64"}, // arg0 test under auxint mask
+		{name: "TMLL", argLength: 1, reg: gp1flags, asm: "TMLL", typ:"Flags", aux: "Int64"}, // arg0 test under auxint mask
+
 		{name: "FCMPS", argLength: 2, reg: fp2flags, asm: "CEBR", typ: "Flags"}, // arg0 compare to arg1, f32
 		{name: "FCMP", argLength: 2, reg: fp2flags, asm: "FCMPU", typ: "Flags"}, // arg0 compare to arg1, f64
 
