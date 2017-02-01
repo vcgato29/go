@@ -321,6 +321,12 @@ const (
 	ACMPW
 	ACMPWU
 
+	// test under mask
+	ATMHH
+	ATMHL
+	ATMLH
+	ATMLL
+
 	// compare and swap
 	ACS
 	ACSG
